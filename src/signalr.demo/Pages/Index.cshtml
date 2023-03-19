@@ -8,3 +8,59 @@
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<script src="https://unpkg.com/@@aspnet/signalr@@1.0.0-rc1-final/dist/browser/signalr.js"></script>
+<div class="signalr-demo">
+    <form id="message-form">
+        <input type="text" id="message-box"/>
+    </form>
+    <hr />
+    <ul id="messages"></ul>
+</div>
+
+<script>
+    const messageForm =  document.getElementById('message-form');
+    const messageBox = document.getElementById('message-box');
+    const messages = document.getElementById('messages');
+    const options = {
+        accessTokenFactory: getToken
+    };
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chat", options)
+        .configureLogging(signalR.LogLevel.Information)
+        .build();
+        
+    connection.on('newMessage', (sender, messageText) => {
+        console.log(`${sender}:${messageText}`);
+        
+        const newMessage = document.createElement('li');
+        newMessage.appendChild(document.createTextNode(`${sender}:${messageText}`));
+        messages.appendChild(newMessage);
+    });
+    
+    connection.start()
+        .then(() => console.log('connected!'))
+        .catch(console.error);
+        
+    messageForm.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const message = messageBox.value;
+        connection.invoke('SendMessage', message);
+        messageBox.value = '';
+    });
+    function getToken() {
+        const xhr = new XMLHttpRequest();
+        return new Promise ((resolve, reject) => {
+            xhr.onreadystatechange = function() {
+                if (this.readyState !== 4) return;
+                if (this.status == 200) {
+                    resolve(this.responseText);
+                } else {
+                    reject(this.statusText);
+                }
+            };
+            xhr.open("GET", "/api/token");
+            xhr.send();
+        });
+    }    
+</script>
