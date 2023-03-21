@@ -20,21 +20,24 @@ builder.Services.AddSignalR();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews();
 builder.Services.AddMvc();
+builder.Services.AddControllers();
 var key = new SymmetricSecurityKey(System.Text.Encoding.ASCII.GetBytes(builder.Configuration["JwtKey"]));
-builder.Services.AddAuthentication().AddJwtBearer(options => {
+builder.Services.AddAuthentication().AddJwtBearer(options =>
+{
     options.TokenValidationParameters = new TokenValidationParameters
     {
-            LifetimeValidator = (before, expires, token, parameters) => 
-            expires > DateTime.UtcNow,
-            ValidateAudience = false,
-            ValidateIssuer = false,
-            ValidateActor = false,
-            ValidateLifetime = true,
-            IssuerSigningKey = key,
-            NameClaimType = ClaimTypes.NameIdentifier
+        LifetimeValidator = (before, expires, token, parameters) =>
+        expires > DateTime.UtcNow,
+        ValidateAudience = false,
+        ValidateIssuer = false,
+        ValidateActor = false,
+        ValidateLifetime = true,
+        IssuerSigningKey = key,
+        NameClaimType = ClaimTypes.NameIdentifier
     };
-        options.Events = new JwtBearerEvents
+    options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
@@ -75,17 +78,20 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.MapDefaultControllerRoute();
 
 app.UseAuthorization();
 app.UseAuthentication();
 
-app.MapRazorPages();
 
-app.UseEndpoints(endpoints => 
-{
-    endpoints
-        .MapControllers();
-    endpoints.MapHub<Chat>("/chat");
-});
+app.MapRazorPages();
+app.MapControllers();
+
+// app.UseEndpoints(endpoints =>
+// {
+//     endpoints
+//         .MapControllers();
+//     endpoints.MapHub<Chat>("/chat");
+// });
 
 app.Run();
